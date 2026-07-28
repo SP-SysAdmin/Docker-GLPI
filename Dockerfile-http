@@ -1,0 +1,97 @@
+# Use the latest Ubuntu base image
+FROM ubuntu:26.04
+
+# --- ENV variable ---
+ENV TZ=Europe/Paris
+ENV WEB_USER=web
+ENV GLPI_VERSION=11.0.8
+# --- ENV variable ---
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update and upgrade the system packages
+RUN apt-get update -y && \
+    apt-get upgrade -y
+
+# Install system packages and glpi dependencies
+RUN apt-get install -y --no-install-recommends \
+    tzdata \
+    cron \
+    unzip \
+    wget \
+    curl \
+    ca-certificates \
+# WEB PACKAGES
+    apache2 \
+    php \
+# GLPI DEPENDECIES
+    php-curl \
+    php-gd \
+    php-intl \
+    php-mysql \
+    php-zip \
+    php-bcmath \
+    php-mbstring \
+    php-xml \
+    php-bz2 \
+    php-ldap \
+    php-fpm
+
+# DOWNLOAD | EXTRACT | MANAGE GLPI FILES
+RUN wget -nv https://github.com/glpi-project/glpi/releases/download/${GLPI_VERSION}/glpi-${GLPI_VERSION}.tgz && \
+    tar -xzf glpi-${GLPI_VERSION}.tgz && \
+    mv glpi*/* /var/www/html/ && \
+    rm -r glpi* && \
+# MAKE DIFFERENT GLPI FOLDER
+    mkdir /etc/glpi && \
+    mkdir /var/lib/glpi && \
+    mkdir /var/log/glpi && \
+# MOUVE FILES IN GLPI DIRECTORY
+    mv /var/www/html/config /etc/glpi && \
+    mv /var/www/html/files /var/lib/glpi
+
+# COPY FILES IN CT
+COPY glpi-files/downstream.php /var/www/html/inc
+COPY glpi-files/local_define.php /etc/glpi
+COPY entrypoint.sh /entrypoint.sh
+COPY glpi-cron /etc/cron.d/glpi-cron
+
+# CONFIGURE SYSTEM / PACKAGES / OTHERS
+#SYSTEM
+RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && \
+    echo ${TZ} > /etc/timezone && \
+# WEB USER
+    useradd -m -s /usr/sbin/nologin -G www-data ${WEB_USER} && \
+    sed -i "s/^export APACHE_RUN_USER=.*/export APACHE_RUN_USER=${WEB_USER}/" /etc/apache2/envvars && \
+    sed -i "s/^export APACHE_RUN_GROUP=.*/export APACHE_RUN_GROUP=www-data/" /etc/apache2/envvars && \
+# APACHE2 RIGHTS
+    chown -R ${WEB_USER}:www-data /var/log/apache2 && \
+    chmod -R 775 /var/log/apache2 && \
+# GLPI RIGHTS
+    chown -R ${WEB_USER}:www-data /var/www/html && \
+    chown -R ${WEB_USER}:www-data /etc/glpi && \
+    chown -R ${WEB_USER}:www-data /var/lib/glpi && \
+    chown -R ${WEB_USER}:www-data /var/log/glpi && \
+    chmod -R 755 /var/www/html && \
+    chmod -R 755 /etc/glpi && \
+    chmod -R 755 /var/lib/glpi && \
+    chmod -R 755 /var/log/glpi && \
+# CRON RIGHTS
+    chmod 0644 /etc/cron.d/glpi-cron && \
+# ENTRYPOINT RIGHTS
+    chmod +x /entrypoint.sh && \
+# ADD CRON
+    crontab /etc/cron.d/glpi-cron
+
+# Clean up apt cache to reduce image size
+RUN apt-get remove -y wget unzip && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# CHECK IF CT IS AVAILABLE
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -fsS http://localhost/index.php || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]
