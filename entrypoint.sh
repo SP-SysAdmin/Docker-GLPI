@@ -5,7 +5,11 @@ echo "Démarrage de cron..."
 service cron start
 
 echo "Démarrage de PHP-FPM..."
-php-fpm -D
+service php8.5-fpm start 
+
+if [ "$#" -gt 0 ]; then
+    exec "$@"
+fi
 
 echo "Démarrage d'Apache..."
 exec apachectl -D FOREGROUND

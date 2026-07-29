@@ -1,5 +1,5 @@
 # Use the latest Ubuntu base image
-FROM ubuntu:26.04
+FROM ubuntu:26.10
 
 # --- ENV variable ---
 ENV TZ=Europe/Paris
@@ -80,7 +80,7 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && \
 # CRON RIGHTS
     chmod 0644 /etc/cron.d/glpi-cron && \
 # ENTRYPOINT RIGHTS
-    chmod +x /entrypoint.sh && \
+    chmod 755 /entrypoint.sh && chmod +x /entrypoint.sh && \
 # ADD CRON
     crontab /etc/cron.d/glpi-cron
 
@@ -90,8 +90,13 @@ RUN apt-get remove -y wget unzip && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# SEC
+RUN rm -f /usr/bin/pebble
+
 # CHECK IF CT IS AVAILABLE
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -fsS http://localhost/index.php || exit 1
+CMD curl -fsS http://localhost/index.php || exit 1
+
+WORKDIR /var/www/html
 
 ENTRYPOINT ["/entrypoint.sh"]
