@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
   - PHP-FPM configuration management (pool.d/www.conf)
   - Apache run user configuration improvements
   - Reordered RUN command for better module loading
+  - Added `date.timezone` configuration in PHP-FPM php.ini via sed
 - **vhost-http.conf**:
   - RewriteEngine enabled (changed from Off to On)
   - Complete VirtualHost configuration with logging

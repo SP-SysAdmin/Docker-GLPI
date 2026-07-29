@@ -62,10 +62,11 @@ COPY glpi-cron /etc/cron.d/glpi-cron
 #SYSTEM
 RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && \
     echo ${TZ} > /etc/timezone && \
-# CREATE WEB USER
+    # CREATE WEB USER
     useradd -m -s /usr/sbin/nologin -G www-data ${WEB_USER} && \
-# APACHE2 | PHP-FPM CONFIG
-    sed -i -e "s/^user = .*/user = ${WEB_USER}/" -e "s/^group = .*/group = www-data/" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf && \
+    # APACHE2 | PHP-FPM CONFIG
+    sed -i "s|^;*date.timezone *=.*|date.timezone = ${TZ}|" /etc/php/${PHP_VERSION}/fpm/php.ini && \
+    sed -e "s/^user = .*/user = ${WEB_USER}/" -e "s/^group = .*/group = www-data/" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf && \
     sed -i "s/^export APACHE_RUN_USER=.*/export APACHE_RUN_USER=${WEB_USER}/" /etc/apache2/envvars && \
     sed -i "s/^export APACHE_RUN_GROUP=.*/export APACHE_RUN_GROUP=www-data/" /etc/apache2/envvars && \
 # APACHE2 RIGHTS
