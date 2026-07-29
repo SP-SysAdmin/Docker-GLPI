@@ -5,6 +5,7 @@ FROM ubuntu:26.10
 ENV TZ=Europe/Paris
 ENV WEB_USER=web
 ENV GLPI_VERSION=11.0.8
+ENV PHP_VERSION=8.5
 # --- ENV variable ---
 
 # Prevent interactive prompts during package installation
@@ -24,19 +25,19 @@ RUN apt-get install -y --no-install-recommends \
     ca-certificates \
 # WEB PACKAGES
     apache2 \
-    php \
+    php${PHP_VERSION} \
 # GLPI DEPENDECIES
-    php-curl \
-    php-gd \
-    php-intl \
-    php-mysql \
-    php-zip \
-    php-bcmath \
-    php-mbstring \
-    php-xml \
-    php-bz2 \
-    php-ldap \
-    php-fpm
+    php${PHP_VERSION}-curl \
+    php${PHP_VERSION}-gd \
+    php${PHP_VERSION}-intl \
+    php${PHP_VERSION}-mysql \
+    php${PHP_VERSION}-zip \
+    php${PHP_VERSION}-bcmath \
+    php${PHP_VERSION}-mbstring \
+    php${PHP_VERSION}-xml \
+    php${PHP_VERSION}-bz2 \
+    php${PHP_VERSION}-ldap \
+    php${PHP_VERSION}-fpm
 
 # DOWNLOAD | EXTRACT | MANAGE GLPI FILES
 RUN wget -nv https://github.com/glpi-project/glpi/releases/download/${GLPI_VERSION}/glpi-${GLPI_VERSION}.tgz && \
@@ -61,8 +62,10 @@ COPY glpi-cron /etc/cron.d/glpi-cron
 #SYSTEM
 RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && \
     echo ${TZ} > /etc/timezone && \
-# WEB USER
+# CREATE WEB USER
     useradd -m -s /usr/sbin/nologin -G www-data ${WEB_USER} && \
+# APACHE2 CONFIG
+    sed -i -e "s/^user = .*/user = ${WEB_USER}/" -e "s/^group = .*/group = www-data/" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf && \
     sed -i "s/^export APACHE_RUN_USER=.*/export APACHE_RUN_USER=${WEB_USER}/" /etc/apache2/envvars && \
     sed -i "s/^export APACHE_RUN_GROUP=.*/export APACHE_RUN_GROUP=www-data/" /etc/apache2/envvars && \
 # APACHE2 RIGHTS
@@ -82,8 +85,13 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && \
 # ENTRYPOINT RIGHTS
     chmod 755 /entrypoint.sh && chmod +x /entrypoint.sh && \
 # ADD CRON
-    crontab /etc/cron.d/glpi-cron
-
+    crontab /etc/cron.d/glpi-cron && \
+# APACHE ENABLE MODULES
+    a2enmod rewrite && \
+    a2enmod headers && \
+    a2enmod proxy_fcgi setenvif && \
+    a2enconf php${PHP_VERSION}-fpm
+    
 # Clean up apt cache to reduce image size
 RUN apt-get remove -y wget unzip && \
     apt-get autoremove -y && \
