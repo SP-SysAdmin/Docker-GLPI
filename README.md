@@ -16,6 +16,7 @@ This project provides a containerized environment for running GLPI with Apache2,
 - ✅ Apache modules enabled: `rewrite`, `headers`, `proxy_fcgi`, `setenvif`
 - ✅ PHP-FPM pool configured for `web` user and socket proxy
 - ✅ Cron job support for GLPI scheduled tasks
+- ✅ LDAP synchronization support via `scripts/ldap_sync.sh`
 - ✅ Health checks included
 - ✅ Security hardening (removal of unnecessary binaries)
 - ✅ Production-ready configuration
@@ -97,8 +98,12 @@ docker-compose up -d
 Docker-GLPI/
 ├── Dockerfile-http          # Main Dockerfile for HTTP deployment
 ├── entrypoint.sh           # Container initialization script
-├── glpi-cron               # Cron job configuration for GLPI
+├── cron.d/                  # Cron schedules
+│   ├── glpi.cron            # GLPI scheduled task configuration
+│   └── ldap.cron           # LDAP sync cron schedule
 ├── vhost-http.conf         # Apache virtual host configuration
+├── scripts/
+│   └── ldap_sync.sh        # LDAP synchronization helper script
 ├── glpi-files/
 │   ├── downstream.php      # GLPI downstream configuration
 │   └── local_define.php    # GLPI local definitions
@@ -173,21 +178,25 @@ docker exec glpi-prod curl -fsS http://localhost/index.php
 
 ## 🔄 Cron Jobs
 
-GLPI requires cron to run background tasks. The container includes a pre-configured cron job:
+GLPI requires cron to run background tasks. The container includes a pre-configured cron job configuration in:
 
-**File**: `glpi-cron`
+**File**: `cron.d/glpi.cron`
 
-The cron schedule is automatically loaded at container startup. Verify it's running:
+An additional optional cron file is available for LDAP synchronization:
+
+**File**: `cron.d/ldap.cron`
+
+The cron schedules are automatically loaded at container startup. Verify they're running:
 
 ```bash
-docker exec glpi crontab -l
+docker exec glpi-prod crontab -l
 ```
 
 ## 🐛 Troubleshooting
 
 ### Container won't start
 ```bash
-docker logs glpi
+docker logs glpi-prod
 ```
 
 ### Permission issues
@@ -199,13 +208,13 @@ docker exec glpi-prod ls -la /var/lib/glpi/files
 ### PHP errors
 Check the Apache error logs:
 ```bash
-docker exec glpi tail -f /var/log/apache2/error.log
+docker exec glpi-prod tail -f /var/log/apache2/error.log
 ```
 
 ### GLPI not responding
 Verify the health check:
 ```bash
-docker exec glpi curl -v http://localhost/index.php
+docker exec glpi-prod curl -v http://localhost/index.php
 ```
 
 ## 📚 Additional Resources

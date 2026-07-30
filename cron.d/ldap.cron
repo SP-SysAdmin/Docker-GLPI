@@ -1,0 +1,1 @@
+*/10 * * * * /scripts/ldap_sync.sh

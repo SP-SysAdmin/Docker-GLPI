@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **scripts/ldap_sync.sh**: LDAP user synchronization helper script for GLPI
+- **cron.d/ldap.cron**: LDAP sync schedule every 10 minutes
+
 ## [1.1.0] - 2026-07-30
 
 ### Added
