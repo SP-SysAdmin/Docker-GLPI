@@ -12,10 +12,12 @@ This project provides a containerized environment for running GLPI with Apache2,
 
 - ✅ GLPI v11.0.8 pre-configured
 - ✅ Apache2 web server with PHP-FPM 8.5
+- ✅ `date.timezone` configured automatically from `TZ`
+- ✅ Apache modules enabled: `rewrite`, `headers`, `proxy_fcgi`, `setenvif`
+- ✅ PHP-FPM pool configured for `web` user and socket proxy
 - ✅ Cron job support for GLPI scheduled tasks
 - ✅ Health checks included
 - ✅ Security hardening (removal of unnecessary binaries)
-- ✅ Timezone support (default: Europe/Paris)
 - ✅ Production-ready configuration
 
 ## 🔧 Prerequisites
@@ -125,10 +127,10 @@ You can override these when building or running the container.
 It's recommended to mount the following directories for data persistence:
 
 ```bash
--v glpi_files:/var/lib/glpi/files      # GLPI files and uploads
--v glpi_logs:/var/log/glpi             # Application logs
--v glpi_config:/etc/glpi               # Configuration files (optional)
--v glpi_db:/var/lib/mysql              # Database (if using MariaDB container)
+-v glpi-prod-data:/var/lib/glpi      # GLPI files and uploads
+-v glpi-prod-conf:/etc/glpi          # Configuration files and local definitions
+-v glpi-prod-log:/var/log/glpi       # Application logs
+-v glpi_db:/var/lib/mysql             # Database (if using MariaDB container)
 ```
 
 ### Port Mapping
@@ -156,7 +158,7 @@ The container includes a health check that verifies GLPI is responding:
 Check container status:
 ```bash
 docker ps  # Look for "healthy" status
-docker exec glpi curl -fsS http://localhost/index.php
+docker exec glpi-prod curl -fsS http://localhost/index.php
 ```
 
 ## 📝 First Time Setup
@@ -191,7 +193,7 @@ docker logs glpi
 ### Permission issues
 Ensure the volumes have proper permissions:
 ```bash
-docker exec glpi ls -la /var/lib/glpi/files
+docker exec glpi-prod ls -la /var/lib/glpi/files
 ```
 
 ### PHP errors
@@ -229,6 +231,6 @@ For issues and questions:
 
 ---
 
-**Last Updated**: July 29, 2026  
-**Version**: 1.0.0  
+**Last Updated**: July 30, 2026  
+**Version**: 1.1.0  
 **GLPI Version**: 11.0.8

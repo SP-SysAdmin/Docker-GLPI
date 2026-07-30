@@ -4,10 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [1.1.0] - 2026-07-29
+## [1.1.0] - 2026-07-30
 
 ### Added
-- **README.md**: Comprehensive project documentation with setup instructions, configuration guide, and troubleshooting
+- **README.md**: Comprehensive project documentation with setup instructions, configuration guide, troubleshooting, and updated container naming/command examples
 - **Dockerfile-http**: 
   - Apache modules configuration: `rewrite`, `headers`, `proxy_fcgi`, `setenvif`
   - PHP-FPM socket configuration via proxy_fcgi
