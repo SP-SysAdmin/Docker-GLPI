@@ -19,6 +19,7 @@ RUN apt-get update -y && \
 RUN apt-get install -y --no-install-recommends \
     tzdata \
     cron \
+    inotify-tools \
     unzip \
     wget \
     curl \
@@ -56,7 +57,7 @@ RUN wget -nv https://github.com/glpi-project/glpi/releases/download/${GLPI_VERSI
 COPY glpi-files/downstream.php /var/www/html/inc
 COPY glpi-files/local_define.php /etc/glpi
 COPY entrypoint.sh /entrypoint.sh
-COPY glpi-cron /etc/cron.d/glpi-cron
+#COPY glpi-cron /etc/cron.d/glpi-cron
 
 # CONFIGURE SYSTEM / PACKAGES / OTHERS
 #SYSTEM
@@ -66,7 +67,7 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && \
     useradd -m -s /usr/sbin/nologin -G www-data ${WEB_USER} && \
     # APACHE2 | PHP-FPM CONFIG
     sed -i "s|^;*date.timezone *=.*|date.timezone = ${TZ}|" /etc/php/${PHP_VERSION}/fpm/php.ini && \
-    sed -e "s/^user = .*/user = ${WEB_USER}/" -e "s/^group = .*/group = www-data/" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf && \
+    sed -i -e "s/^user = .*/user = ${WEB_USER}/" -e "s/^listen.owner = .*/listen.owner = ${WEB_USER}/" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf && \
     sed -i "s/^export APACHE_RUN_USER=.*/export APACHE_RUN_USER=${WEB_USER}/" /etc/apache2/envvars && \
     sed -i "s/^export APACHE_RUN_GROUP=.*/export APACHE_RUN_GROUP=www-data/" /etc/apache2/envvars && \
 # APACHE2 RIGHTS
@@ -82,11 +83,11 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && \
     chmod -R 755 /var/lib/glpi && \
     chmod -R 755 /var/log/glpi && \
 # CRON RIGHTS
-    chmod 0644 /etc/cron.d/glpi-cron && \
+    #chmod 0644 /etc/cron.d/glpi-cron && \
 # ENTRYPOINT RIGHTS
     chmod 755 /entrypoint.sh && chmod +x /entrypoint.sh && \
 # ADD CRON
-    crontab /etc/cron.d/glpi-cron && \
+    #crontab /etc/cron.d/glpi-cron && \
 # APACHE ENABLE MODULES
     a2enmod rewrite && \
     a2enmod headers && \
