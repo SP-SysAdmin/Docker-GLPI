@@ -1,1 +1,1 @@
-*/10 * * * * /scripts/ldap_sync.sh
+*/1 * * * * su -s /bin/bash web -c "sh /scripts/ldap_sync.sh" > /dev/null 2>&1
